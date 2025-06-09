@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventory Manager - Dark Mode</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Enable dark mode by default on page load
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: #4b5563;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background-color: #1f2937;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div id="app" class="w-full max-w-6xl">
+    <!-- Auth forms container -->
+    <div id="auth-container" class="max-w-md mx-auto bg-gray-800 rounded-lg shadow-lg p-6">
+      <h1 class="text-3xl font-bold mb-6 text-center">Inventory Manager</h1>
+      <div id="auth-forms">
+        <!-- Login Form -->
+        <form id="login-form" class="space-y-4">
+          <h2 class="text-xl font-semibold mb-2 text-center">Login</h2>
+          <input required type="email" id="login-email" placeholder="Email" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input required type="password" id="login-password" placeholder="Password" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 transition rounded py-3 font-semibold">Login</button>
+          <p class="text-center text-gray-400">Don't have an account? <button type="button" id="show-signup" class="text-indigo-400 hover:underline">Sign up</button></p>
+          <p id="login-error" class="text-red-500 text-center mt-1"></p>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="signup-form" class="hidden space-y-4">
+          <h2 class="text-xl font-semibold mb-2 text-center">Sign Up</h2>
+          <input required type="email" id="signup-email" placeholder="Email" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input required type="password" id="signup-password" placeholder="Password" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <button type="submit" class="w-full bg-green-600 hover:bg-green-700 transition rounded py-3 font-semibold">Sign Up</button>
+          <p class="text-center text-gray-400">Already have an account? <button type="button" id="show-login" class="text-green-400 hover:underline">Login</button></p>
+          <p id="signup-error" class="text-red-500 text-center mt-1"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dashboard container -->
+    <div id="dashboard-container" class="hidden">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <button id="logout-btn" class="bg-red-600 hover:bg-red-700 transition px-4 py-2 rounded text-white font-semibold">Logout</button>
+      </header>
+
+      <section class="mb-6 bg-gray-800 rounded p-4 shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Add New Order</h2>
+        <form id="add-product-form" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <input type="text" id="orderId" placeholder="Order ID" required class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" id="productId" placeholder="Product ID" required class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="date" id="orderDate" placeholder="Order Date" required class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="number" id="quantity" min="1" placeholder="Quantity" required class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <input type="number" step="0.01" min="0" id="price" placeholder="Price" required class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 transition rounded py-2 font-semibold">Add</button>
+        </form>
+        <p id="add-error" class="text-red-500 mt-2"></p>
+        <p id="add-success" class="text-green-500 mt-2"></p>
+      </section>
+
+      <section class="bg-gray-800 rounded p-4 shadow-lg overflow-x-auto">
+        <h2 class="text-xl font-semibold mb-4">Orders</h2>
+        <div class="flex flex-wrap gap-4 mb-4">
+          <div>
+            <label class="block mb-1 font-semibold">Sort By</label>
+            <select id="sort-select" class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">-- Select --</option>
+              <option value="orderId">Order ID</option>
+              <option value="productId">Product ID</option>
+              <option value="orderDate">Order Date</option>
+              <option value="quantity">Quantity</option>
+              <option value="price">Price</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block mb-1 font-semibold">Order</label>
+            <select id="order-select" class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block mb-1 font-semibold">Filter Min Quantity</label>
+            <input type="number" min="0" id="min-quantity" placeholder="Min Qty" class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-24" />
+          </div>
+
+          <div>
+            <label class="block mb-1 font-semibold">Filter Max Quantity</label>
+            <input type="number" min="0" id="max-quantity" placeholder="Max Qty" class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-24" />
+          </div>
+
+          <div>
+            <label class="block mb-1 font-semibold">Filter Min Price</label>
+            <input type="number" min="0" step="0.01" id="min-price" placeholder="Min Price" class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-24" />
+          </div>
+
+          <div>
+            <label class="block mb-1 font-semibold">Filter Max Price</label>
+            <input type="number" min="0" step="0.01" id="max-price" placeholder="Max Price" class="p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-24" />
+          </div>
+
+          <button id="apply-filters" class="bg-green-600 hover:bg-green-700 transition rounded px-4 py-2 self-end font-semibold">Apply Filters</button>
+          <button id="clear-filters" class="bg-red-600 hover:bg-red-700 transition rounded px-4 py-2 self-end font-semibold">Clear Filters</button>
+        </div>
+
+        <table class="min-w-full table-auto border-collapse border border-gray-700 text-sm">
+          <thead class="bg-gray-700 text-gray-200">
+            <tr>
+              <th class="border border-gray-600 px-4 py-2 cursor-pointer hover:bg-gray-600">Order ID</th>
+              <th class="border border-gray-600 px-4 py-2 cursor-pointer hover:bg-gray-600">Product ID</th>
+              <th class="border border-gray-600 px-4 py-2 cursor-pointer hover:bg-gray-600">Order Date</th>
+              <th class="border border-gray-600 px-4 py-2 cursor-pointer hover:bg-gray-600">Quantity</th>
+              <th class="border border-gray-600 px-4 py-2 cursor-pointer hover:bg-gray-600">Price</th>
+              <th class="border border-gray-600 px-4 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body" class="bg-gray-800"></tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // API base url
+    const API_BASE = 'http://localhost:4000/api';
+
+    // Elements
+    const authContainer = document.getElementById('auth-container');
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const showSignupBtn = document.getElementById('show-signup');
+    const showLoginBtn = document.getElementById('show-login');
+    const loginError = document.getElementById('login-error');
+    const signupError = document.getElementById('signup-error');
+    const logoutBtn = document.getElementById('logout-btn');
+    const addProductForm = document.getElementById('add-product-form');
+    const addError = document.getElementById('add-error');
+    const addSuccess = document.getElementById('add-success');
+    const ordersTableBody = document.getElementById('orders-table-body');
+
+    const sortSelect = document.getElementById('sort-select');
+    const orderSelect = document.getElementById('order-select');
+    const minQuantityInput = document.getElementById('min-quantity');
+    const maxQuantityInput = document.getElementById('max-quantity');
+    const minPriceInput = document.getElementById('min-price');
+    const maxPriceInput = document.getElementById('max-price');
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+
+    let token = localStorage.getItem('token');
+    let userEmail = localStorage.getItem('userEmail');
+    let orders = [];
+
+    // Show signup or login forms
+    showSignupBtn.onclick = () => {
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+      loginError.textContent = '';
+      signupError.textContent = '';
+    };
+    showLoginBtn.onclick = () => {
+      signupForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      loginError.textContent = '';
+      signupError.textContent = '';
+    };
+
+    // Check if logged in on page load
+    window.onload = () => {
+      if(token && userEmail){
+        showDashboard();
+      } else {
+        showAuth();
+      }
+    };
+
+    // Show dashboard
+    function showDashboard() {
+      authContainer.classList.add('hidden');
+      dashboardContainer.classList.remove('hidden');
+      loadOrders();
+    }
+    // Show auth forms
+    function showAuth() {
+      dashboardContainer.classList.add('hidden');
+      authContainer.classList.remove('hidden');
+      loginForm.classList.remove('hidden');
+      signupForm.classList.add('hidden');
+      loginError.textContent = '';
+      signupError.textContent = '';
+    }
+
+    // LOGIN
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      loginError.textContent = '';
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if(res.ok){
+          token = data.token;
+          userEmail = email;
+          localStorage.setItem('token', token);
+          localStorage.setItem('userEmail', userEmail);
+          showDashboard();
+        } else {
+          loginError.textContent = data.message || 'Login failed';
+        }
+      } catch (err) {
+        loginError.textContent = 'Server error';
+      }
+    });
+
+    // SIGNUP
+    signupForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      signupError.textContent = '';
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value.trim();
+      try {
+        const res = await fetch(`${API_BASE}/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if(res.ok){
+          alert('Signup successful! Please login.');
+          signupForm.reset();
+          showLoginBtn.click();
+        } else {
+          signupError.textContent = data.message || 'Signup failed';
+        }
+      } catch (err) {
+        signupError.textContent = 'Server error';
+      }
+    });
+
+    // LOGOUT
+    logoutBtn.onclick = () => {
+      token = null;
+      userEmail = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('userEmail');
+      showAuth();
+    };
+
+    // ADD NEW PRODUCT
+    addProductForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      addError.textContent = '';
+      addSuccess.textContent = '';
+      const orderId = document.getElementById('orderId').value.trim();
+      const productId = document.getElementById('productId').value.trim();
+      const orderDate = document.getElementById('orderDate').value;
+      const quantity = document.getElementById('quantity').value;
+      const price = document.getElementById('price').value;
+
+      if(!orderId || !productId || !orderDate || !quantity || !price){
+        addError.textContent = 'Please fill all fields.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/products`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ orderId, productId, orderDate, quantity: Number(quantity), price: Number(price) }),
+        });
+        const data = await res.json();
+        if(res.ok){
+          addSuccess.textContent = 'Order added successfully!';
+          addProductForm.reset();
+          loadOrders();
+        } else {
+          addError.textContent = data.message || 'Failed to add order';
+        }
+      } catch(err) {
+        addError.textContent = 'Server error';
+      }
+    });
+
+    // Load orders with current filters and sorting
+    async function loadOrders(){
+      ordersTableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Loading...</td></tr>';
+
+      let query = [];
+      if(sortSelect.value) query.push(`sortBy=${sortSelect.value}`);
+      if(orderSelect.value) query.push(`order=${orderSelect.value}`);
+
+      // Filtering params
+      if(minQuantityInput.value) query.push(`minQuantity=${minQuantityInput.value}`);
+      if(maxQuantityInput.value) query.push(`maxQuantity=${maxQuantityInput.value}`);
+      if(minPriceInput.value) query.push(`minPrice=${minPriceInput.value}`);
+      if(maxPriceInput.value) query.push(`maxPrice=${maxPriceInput.value}`);
+
+      try {
+        const res = await fetch(`${API_BASE}/products?${query.join('&')}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if(res.ok){
+          orders = data.products;
+          renderOrdersTable();
+        } else {
+          ordersTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-red-500">${data.message || 'Failed to load orders'}</td></tr>`;
+        }
+      } catch(err) {
+        ordersTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-red-500">Server error</td></tr>`;
+      }
+    }
+
+    // Render table rows
+    function renderOrdersTable() {
+      if(orders.length === 0){
+        ordersTableBody.innerHTML = `<tr><td colspan="6" class="text-center p-4 text-gray-400">No orders found</td></tr>`;
+        return;
+      }
+      ordersTableBody.innerHTML = '';
+      for(const order of orders){
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-700 transition cursor-pointer';
+        tr.innerHTML = `
+          <td class="border border-gray-600 px-4 py-2">${order.orderId}</td>
+          <td class="border border-gray-600 px-4 py-2">${order.productId}</td>
+          <td class="border border-gray-600 px-4 py-2">${new Date(order.orderDate).toLocaleDateString()}</td>
+          <td class="border border-gray-600 px-4 py-2">${order.quantity}</td>
+          <td class="border border-gray-600 px-4 py-2">${order.price.toFixed(2)}</td>
+          <td class="border border-gray-600 px-4 py-2 text-center space-x-2">
+            <button data-id="${order._id}" class="edit-btn bg-yellow-500 hover:bg-yellow-600 px-2 py-1 rounded text-black font-semibold">Edit</button>
+            <button data-id="${order._id}" class="delete-btn bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-white font-semibold">Delete</button>
+          </td>
+        `;
+        ordersTableBody.appendChild(tr);
+      }
+
+      // Add event listeners for delete and edit
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = () => deleteOrder(btn.dataset.id);
+      });
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = () => editOrder(btn.dataset.id);
+      });
+    }
+
+    // Delete order
+    async function deleteOrder(id){
+      if(!confirm('Are you sure you want to delete this order?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/products/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if(res.ok){
+          loadOrders();
+        } else {
+          alert(data.message || 'Failed to delete order');
+        }
+      } catch(err) {
+        alert('Server error');
+      }
+    }
+
+    // Edit order (inline editing)
+    function editOrder(id){
+      const row = [...ordersTableBody.children].find(tr => {
+        const editBtn = tr.querySelector('.edit-btn');
+        return editBtn && editBtn.dataset.id === id;
+      });
+      if(!row) return;
+
+      // Find the order in array
+      const order = orders.find(o => o._id === id);
+      if(!order) return;
+
+      // Replace cells with input fields
+      row.innerHTML = `
+        <td class="border border-gray-600 px-2 py-1"><input type="text" value="${order.orderId}" class="w-full p-1 rounded bg-gray-700 border border-gray-600 text-gray-100" /></td>
+        <td class="border border-gray-600 px-2 py-1"><input type="text" value="${order.productId}" class="w-full p-1 rounded bg-gray-700 border border-gray-600 text-gray-100" /></td>
+        <td class="border border-gray-600 px-2 py-1"><input type="date" value="${order.orderDate.slice(0,10)}" class="w-full p-1 rounded bg-gray-700 border border-gray-600 text-gray-100" /></td>
+        <td class="border border-gray-600 px-2 py-1"><input type="number" min="1" value="${order.quantity}" class="w-full p-1 rounded bg-gray-700 border border-gray-600 text-gray-100" /></td>
+        <td class="border border-gray-600 px-2 py-1"><input type="number" min="0" step="0.01" value="${order.price}" class="w-full p-1 rounded bg-gray-700 border border-gray-600 text-gray-100" /></td>
+        <td class="border border-gray-600 px-2 py-1 text-center space-x-2">
+          <button class="save-btn bg-green-600 hover:bg-green-700 px-2 py-1 rounded text-white font-semibold">Save</button>
+          <button class="cancel-btn bg-gray-600 hover:bg-gray-700 px-2 py-1 rounded text-white font-semibold">Cancel</button>
+        </td>
+      `;
+
+      const inputs = row.querySelectorAll('input');
+      const saveBtn = row.querySelector('.save-btn');
+      const cancelBtn = row.querySelector('.cancel-btn');
+
+      cancelBtn.onclick = () => renderOrdersTable();
+
+      saveBtn.onclick = async () => {
+        // Validate inputs
+        const [newOrderId, newProductId, newOrderDate, newQuantity, newPrice] = Array.from(inputs).map(i => i.value.trim());
+        if(!newOrderId || !newProductId || !newOrderDate || !newQuantity || !newPrice){
+          alert('Please fill all fields');
+          return;
+        }
+        try {
+          const res = await fetch(`${API_BASE}/products/${id}`, {
+            method: 'PUT',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({
+              orderId: newOrderId,
+              productId: newProductId,
+              orderDate: newOrderDate,
+              quantity: Number(newQuantity),
+              price: Number(newPrice)
+            }),
+          });
+          const data = await res.json();
+          if(res.ok){
+            loadOrders();
+          } else {
+            alert(data.message || 'Failed to update order');
+          }
+        } catch(err) {
+          alert('Server error');
+        }
+      };
+    }
+
+    // Apply filters button
+    applyFiltersBtn.onclick = () => {
+      loadOrders();
+    };
+
+    // Clear filters button
+    clearFiltersBtn.onclick = () => {
+      sortSelect.value = '';
+      orderSelect.value = 'asc';
+      minQuantityInput.value = '';
+      maxQuantityInput.value = '';
+      minPriceInput.value = '';
+      maxPriceInput.value = '';
+      loadOrders();
+    };
+  </script>
+</body>
+</html>
